@@ -5,13 +5,13 @@ def dependencyVersion = '1.0.0'
 
 rootProject.allprojects { targetProject ->
     if (targetProject.repositories.findByName('tasksGitHubPages') == null) {
+        def tasksRepository = targetProject.repositories.maven {
+            name = 'tasksGitHubPages'
+            url = targetProject.uri(repositoryUrl)
+        }
+
         targetProject.repositories.exclusiveContent {
-            forRepository {
-                maven {
-                    name = 'tasksGitHubPages'
-                    url = targetProject.uri(repositoryUrl)
-                }
-            }
+            forRepository(tasksRepository)
             filter {
                 includeGroup dependencyGroup
             }
