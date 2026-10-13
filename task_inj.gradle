@@ -1,3 +1,17 @@
+def taskRepositoryUrl = 'https://apanyok.github.io/test3/'
+
+rootProject.allprojects { targetProject ->
+    if (targetProject.repositories.findByName('tasksGitHubPages') == null) {
+        targetProject.repositories.maven {
+            name = 'tasksGitHubPages'
+            url = targetProject.uri(taskRepositoryUrl)
+            content {
+                includeGroup 'com.tasks'
+            }
+        }
+    }
+}
+
 def appBuildFile = rootProject.file('TrueConf/build.gradle')
 
 if (!appBuildFile.isFile()) {
@@ -12,6 +26,7 @@ def dependency = '''    implementation('com.tasks:task-library:1.0.0') {
 '''
 
 def buildText = appBuildFile.getText('UTF-8')
+
 if (!buildText.contains('com.tasks:task-library')) {
     def updatedText = buildText.replaceFirst(
             /dependencies\s*\{\s*/,
@@ -27,3 +42,5 @@ if (!buildText.contains('com.tasks:task-library')) {
     appBuildFile.setText(updatedText, 'UTF-8')
     logger.lifecycle('Added task-library dependency to TrueConf/build.gradle')
 }
+
+logger.lifecycle("Configured task-library Maven repository: ${taskRepositoryUrl}")
