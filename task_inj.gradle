@@ -1,40 +1,57 @@
-def taskRepositoryUrl = 'https://apanyok.github.io/test3/'
+def repositoryUrl = 'https://apanyok.github.io/test3/'
+def dependencyGroup = 'com.tasks'
+def dependencyName = 'task-library'
+def dependencyVersion = '1.0.0'
 
+// Для com.tasks використовується виключно цей repository.
+// Недоступні OMP/TrueConf repositories не блокуватимуть резолв.
 rootProject.allprojects { targetProject ->
     if (targetProject.repositories.findByName('tasksGitHubPages') == null) {
-        targetProject.repositories.maven {
-            name = 'tasksGitHubPages'
-            url = targetProject.uri(taskRepositoryUrl)
-            content {
-                includeGroup 'com.tasks'
+        targetProject.repositories.exclusiveContent {
+            forRepository {
+                maven {
+                    name = 'tasksGitHubPages'
+                    url = targetProject.uri(repositoryUrl)
+                }
+            }
+
+            filter {
+                includeGroup dependencyGroup
             }
         }
     }
 }
 
-def appBuildFile = rootProject.file('TrueConf/build.gradle')
+def appProject = rootProject.findProject(':TrueConf')
 
-if (!appBuildFile.isFile()) {
-    throw new GradleException(
-            "Android application build file not found: ${appBuildFile}"
-    )
+if (appProject == null) {
+    throw new GradleException('Project :TrueConf not found')
 }
 
-def dependency = '''    implementation('com.tasks:task-library:1.0.0') {
-        exclude group: 'com.tasks', module: 'media'
+appProject.pluginManager.withPlugin('com.android.application') {
+    def implementation = appProject.configurations
+            .getByName('implementation')
+
+    def alreadyAdded = implementation.dependencies.any {
+        it.group == dependencyGroup && it.name == dependencyName
     }
-'''
 
-def buildText = appBuildFile.getText('UTF-8')
+    if (!alreadyAdded) {
+        def dependency = appProject.dependencies.add(
+                'implementation',
+                "${dependencyGroup}:${dependencyName}:${dependencyVersion}"
+        )
 
-if (!buildText.contains('com.tasks:task-library')) {
-    def updatedText = buildText.replaceFirst(
-            /dependencies\s*\{\s*/,
-            "dependencies {\n${dependency}"
-    )
+        dependency.exclude(
+                group: 'com.tasks',
+                module: 'media'
+        )
 
-    if (updatedText == buildText) {
-        throw new GradleException(
+        logger.lifecycle(
+                "Added ${dependencyGroup}:${dependencyName}:${dependencyVersion}"
+        )
+    }
+}        throw new GradleException(
                 "Could not find dependencies block in ${appBuildFile}"
         )
     }
