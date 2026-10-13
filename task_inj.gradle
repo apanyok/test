@@ -3,8 +3,6 @@ def dependencyGroup = 'com.tasks'
 def dependencyName = 'task-library'
 def dependencyVersion = '1.0.0'
 
-// Для com.tasks використовується виключно цей repository.
-// Недоступні OMP/TrueConf repositories не блокуватимуть резолв.
 rootProject.allprojects { targetProject ->
     if (targetProject.repositories.findByName('tasksGitHubPages') == null) {
         targetProject.repositories.exclusiveContent {
@@ -14,7 +12,6 @@ rootProject.allprojects { targetProject ->
                     url = targetProject.uri(repositoryUrl)
                 }
             }
-
             filter {
                 includeGroup dependencyGroup
             }
@@ -23,15 +20,12 @@ rootProject.allprojects { targetProject ->
 }
 
 def appProject = rootProject.findProject(':TrueConf')
-
 if (appProject == null) {
     throw new GradleException('Project :TrueConf not found')
 }
 
 appProject.pluginManager.withPlugin('com.android.application') {
-    def implementation = appProject.configurations
-            .getByName('implementation')
-
+    def implementation = appProject.configurations.getByName('implementation')
     def alreadyAdded = implementation.dependencies.any {
         it.group == dependencyGroup && it.name == dependencyName
     }
@@ -41,23 +35,9 @@ appProject.pluginManager.withPlugin('com.android.application') {
                 'implementation',
                 "${dependencyGroup}:${dependencyName}:${dependencyVersion}"
         )
-
-        dependency.exclude(
-                group: 'com.tasks',
-                module: 'media'
-        )
-
+        dependency.exclude(group: 'com.tasks', module: 'media')
         logger.lifecycle(
                 "Added ${dependencyGroup}:${dependencyName}:${dependencyVersion}"
         )
     }
-}        throw new GradleException(
-                "Could not find dependencies block in ${appBuildFile}"
-        )
-    }
-
-    appBuildFile.setText(updatedText, 'UTF-8')
-    logger.lifecycle('Added task-library dependency to TrueConf/build.gradle')
 }
-
-logger.lifecycle("Configured task-library Maven repository: ${taskRepositoryUrl}")
