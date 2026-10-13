@@ -11,7 +11,7 @@ rootProject.allprojects { targetProject ->
         }
 
         targetProject.repositories.exclusiveContent {
-            forRepository(tasksRepository)
+            forRepositories(tasksRepository)
             filter {
                 includeGroup dependencyGroup
             }
